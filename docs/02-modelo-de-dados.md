@@ -97,17 +97,17 @@ shipments                          -- a "solicitação de transporte" publicada 
   pickup_window_end
   delivery_deadline
   special_requirements  (text/json)
-  price_offered          (nullable — empresa pode ou não sugerir preço)
+  price_offered          -- preço sugerido pela empresa, ver [Precificação](08-precificacao.md)
   status              ENUM(ABERTA, ACEITA, EM_TRANSITO, ENTREGUE, CANCELADA)
   created_at
 
-shipment_offers                    -- ofertas/aceites de transportadora sobre uma carga
-  id
+shipment_offers                    -- ofertas/contrapropostas de transportadora sobre uma carga
+  id                                -- fluxo completo em [Precificação](08-precificacao.md)
   shipment_id -> shipments.id
   carrier_id -> companies.id
   driver_id -> drivers.id (nullable até confirmar motorista)
   vehicle_id -> vehicles.id (nullable até confirmar veículo)
-  price_proposed
+  price_proposed                    -- = price_offered se aceite direto, diferente se contraproposta
   status              ENUM(PENDENTE, ACEITA, RECUSADA, CANCELADA)
   created_at
 

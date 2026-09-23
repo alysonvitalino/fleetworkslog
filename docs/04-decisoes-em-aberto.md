@@ -1,4 +1,4 @@
-# Arquitetura e Decisões em Aberto
+# Arquitetura e Decisões Técnicas
 
 ## Stack (confirmada)
 
@@ -16,10 +16,10 @@
 
 TypeScript em todas as camadas, incluindo o backend.
 
-## Decisões em aberto
+## Decisões técnicas
 
-Cada item aqui bloqueia menos do que parece — o MVP pode começar com a opção mais simples
-e revisar depois. Listado por ordem de impacto na arquitetura.
+Todas as decisões abaixo já foram fechadas — o detalhamento completo de cada uma está no
+documento linkado. Listado por ordem de impacto na arquitetura.
 
 ### ~~Armazenamento de posições GPS~~ — decidido
 
@@ -33,36 +33,25 @@ Mapbox, para mapa web, mapa mobile, geocoding e directions/ETA. Comparação de 
 MapLibre + MapTiler, trade-offs e critérios de revisão em
 [Provedor de Mapas](06-provedor-de-mapas.md).
 
-### Monorepo vs. múltiplos repositórios
+### ~~Monorepo vs. múltiplos repositórios~~ — decidido
 
-Temos 3 clientes (app motorista, app empresa, painel web) + 1 backend — vale decidir se:
+Monorepo com `backend/`, `web/`, `mobile/` na raiz e npm workspaces; um único app RN com
+navegação condicional por role (não um app por perfil). Estrutura completa, scripts de
+orquestração e critérios de revisão em [Monorepo](07-monorepo.md).
 
-- Um monorepo com `backend/`, `web/`, `mobile/` (múltiplos apps RN dentro de `mobile/`,
-  ou um único app RN com fluxos diferentes por role)
-- App único do motorista + app único da empresa (dois projetos Expo separados) vs. um só
-  app RN que muda de UI conforme o `role` do usuário logado
+### ~~Quem define o preço do frete~~ — decidido
 
-**Recomendação para o MVP**: um único app RN com navegação condicional por role (menos
-overhead de manter 2 apps mobile separados enquanto o produto está validando o conceito).
-Web (Torre de Controle) e backend em um monorepo com `backend/` e `frontend/` na raiz.
+Empresa sugere o preço; transportadora aceita ou contrapropõe (uma rodada); empresa
+aceita ou recusa. Fluxo completo, estados de `shipment_offers` e regra de cancelamento
+automático de ofertas concorrentes em [Precificação](08-precificacao.md).
 
-### Quem define o preço do frete
+### ~~GPS em background~~ — decidido
 
-Decisão de produto, não só técnica — afeta o schema (`shipments.price_offered`,
-`shipment_offers.price_proposed` já cobrem os 3 cenários abaixo):
-
-- Empresa sugere preço, transportadora aceita ou não (mais simples)
-- Transportadora oferece preço, empresa escolhe entre ofertas (mais próximo de marketplace)
-- Sem preço na plataforma no MVP — combinado fora, plataforma só registra "aceito"
-
-**Recomendação para o MVP**: campo de preço opcional, negociação fora do fluxo — evita
-construir sistema de ofertas/leilão antes de validar que o marketplace tem demanda dos
-dois lados.
-
-### GPS em background (mobile)
-
-Vai exigir tratamento específico de Android/iOS (permissões, consumo de bateria,
-reconexão). Adiado para pós-MVP (ver [MVP](03-mvp.md#fora-do-escopo-do-mvp)).
+`expo-location` + `expo-task-manager` para a fase de validação; migrar para
+`react-native-background-geolocation` (pago) se passar dessa fase ou se a confiabilidade
+em Android se mostrar insuficiente antes disso. Detalhes e critérios de revisão em
+[GPS em Background](09-gps-background.md). Feature em si fica fora do MVP
+(ver [MVP](03-mvp.md#fora-do-escopo-do-mvp)).
 
 ---
 

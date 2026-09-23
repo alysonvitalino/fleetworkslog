@@ -71,4 +71,4 @@ já tivesse apetite/capacidade de operar essa infra desde o início, o que não 
 
 ---
 
-Ver também: [Decisões em Aberto](04-decisoes-em-aberto.md) · [Armazenamento de GPS](05-armazenamento-gps.md)
+Ver também: [Decisões em Aberto](04-decisoes-em-aberto.md) · [Armazenamento de GPS](05-armazenamento-gps.md) · [Monorepo](07-monorepo.md)
