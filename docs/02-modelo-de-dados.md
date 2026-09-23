@@ -132,8 +132,8 @@ delivery_status_events              -- histórico de mudanças de status (audito
 
 ## Posições GPS
 
-Esta é a tabela mais sensível a volume — ver a discussão de escala em
-[Decisões em Aberto](04-decisoes-em-aberto.md#armazenamento-de-posições-gps).
+Esta é a tabela mais sensível a volume — ver o desenho completo em
+[Armazenamento de GPS](05-armazenamento-gps.md).
 
 ```
 driver_positions                    -- histórico bruto (pode virar tabela particionada/TTL)

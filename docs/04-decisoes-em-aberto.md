@@ -14,54 +14,28 @@
 | Auth | JWT + Refresh Token |
 | Infra local | Docker |
 
-Segue o padrão dos demais projetos do workspace (ver `~/Desktop/developer/CLAUDE.md`).
-Diferente de `cria`/`map-creator` (JS puro), este projeto propõe TypeScript no backend —
-alinhar se esse é o padrão desejado para o fleetworkslog especificamente.
+TypeScript em todas as camadas, incluindo o backend.
 
 ## Decisões em aberto
 
 Cada item aqui bloqueia menos do que parece — o MVP pode começar com a opção mais simples
 e revisar depois. Listado por ordem de impacto na arquitetura.
 
-### Armazenamento de posições GPS
+### ~~Armazenamento de posições GPS~~ — decidido
 
-**Problema**: se cada veículo envia posição a cada poucos segundos, salvar cada ping como
-linha permanente no Postgres não escala (10k veículos = volume de escrita alto e histórico
-que cresce indefinidamente).
+Redis para posição atual + amostras esparsas do trajeto no Postgres/PostGIS (por distância,
+tempo ou mudança de status). Desenho completo, chaves, critérios de amostragem e retenção
+em [Armazenamento de GPS](05-armazenamento-gps.md).
 
-**Opções**:
-- Redis guarda só a **última posição** por motorista (chave `driver:{id}:position`, TTL
-  curto); Postgres/PostGIS guarda só amostras esparsas do trajeto (ex: 1 a cada N metros
-  ou minutos) para histórico de rota
-- Buffer em memória/Redis + batch write periódico no Postgres (menos granularidade em
-  tempo real de histórico, mais barato)
-- Tabela `driver_positions` particionada por data + job de limpeza/agregação (rollup) após
-  X dias
+### ~~Provedor de mapas~~ — decidido
 
-**Recomendação para o MVP**: Redis para posição atual (é o que a UI em tempo real consome)
-+ grava no Postgres só em pontos-chave (coleta, mudança de status, a cada N minutos) — não
-precisa da solução de escala definitiva agora, só não pode ser "salvar tudo pra sempre sem
-critério".
-
-### Provedor de mapas
-
-**Opções**: Mapbox, MapLibre (open-source, self-hostable), Google Maps.
-
-**Trade-offs**:
-- Google Maps: melhor geocoding/dados no Brasil, mas custo escala com uso e tem cobrança
-  por chamada de API mais agressiva
-- Mapbox: bom equilíbrio, pricing mais previsível, boa SDK para React Native
-- MapLibre: sem custo de licença, mas exige mais trabalho de setup (tiles, geocoding
-  precisa de provedor à parte)
-
-**Recomendação para o MVP**: Mapbox — SDK madura para RN e web, evita lock-in do Google,
-custo controlável nesse estágio. Reavaliar se o volume de geocoding crescer muito.
+Mapbox, para mapa web, mapa mobile, geocoding e directions/ETA. Comparação de custo com
+MapLibre + MapTiler, trade-offs e critérios de revisão em
+[Provedor de Mapas](06-provedor-de-mapas.md).
 
 ### Monorepo vs. múltiplos repositórios
 
-Os projetos existentes (`map-creator`, `cria`) usam monorepo com `backend/` e `frontend/`
-na raiz. Aqui temos 3 clientes (app motorista, app empresa, painel web) + 1 backend —
-vale decidir se:
+Temos 3 clientes (app motorista, app empresa, painel web) + 1 backend — vale decidir se:
 
 - Um monorepo com `backend/`, `web/`, `mobile/` (múltiplos apps RN dentro de `mobile/`,
   ou um único app RN com fluxos diferentes por role)
@@ -70,7 +44,7 @@ vale decidir se:
 
 **Recomendação para o MVP**: um único app RN com navegação condicional por role (menos
 overhead de manter 2 apps mobile separados enquanto o produto está validando o conceito).
-Web (Torre de Controle) e backend seguem o padrão monorepo já usado no workspace.
+Web (Torre de Controle) e backend em um monorepo com `backend/` e `frontend/` na raiz.
 
 ### Quem define o preço do frete
 
@@ -88,9 +62,7 @@ dois lados.
 ### GPS em background (mobile)
 
 Vai exigir tratamento específico de Android/iOS (permissões, consumo de bateria,
-reconexão). Adiado para pós-MVP (ver [MVP](03-mvp.md#fora-do-escopo-do-mvp)) — quando for
-implementar, consultar a skill `react-native` do workspace para padrões de integração
-nativa.
+reconexão). Adiado para pós-MVP (ver [MVP](03-mvp.md#fora-do-escopo-do-mvp)).
 
 ---
 
