@@ -23,8 +23,9 @@ refresh_tokens
 ```
 
 Um `user` de role `TRANSPORTADORA` ou `EMPRESA` tem um perfil associado (`companies`,
-ver abaixo). Um `user` de role `MOTORISTA` tem um `drivers` associado. `ADMIN` e
-`OPERADOR` não têm perfil de domínio — só acesso à Torre de Controle.
+ver abaixo). Um `user` de role `MOTORISTA` tem um `drivers` associado — **com ou sem**
+vínculo a uma transportadora (ver [Motorista Autônomo](#motorista-autônomo) abaixo).
+`ADMIN` e `OPERADOR` não têm perfil de domínio — só acesso à Torre de Controle.
 
 ## Empresas e Transportadoras
 
@@ -55,7 +56,7 @@ companies
 drivers
   id
   user_id -> users.id
-  carrier_id -> companies.id      -- transportadora à qual pertence
+  carrier_id -> companies.id (nullable)   -- null = motorista autônomo, sem transportadora
   cnh_number
   cnh_category
   phone
@@ -64,12 +65,14 @@ drivers
 
 vehicles
   id
-  carrier_id -> companies.id
+  carrier_id -> companies.id (nullable)   -- veículo de frota de uma transportadora
+  owner_driver_id -> drivers.id (nullable) -- veículo próprio de motorista autônomo
   plate
   type            ENUM(VAN, TRUCK_TOCO, TRUCK_TRUCK, CARRETA, ...)
   capacity_kg
   capacity_m3
   status          ENUM(DISPONIVEL, EM_VIAGEM, MANUTENCAO)
+  -- exatamente um de carrier_id / owner_driver_id deve estar preenchido (constraint de aplicação)
 
 driver_vehicles                    -- histórico de qual motorista dirigiu qual veículo
   id
@@ -78,6 +81,19 @@ driver_vehicles                    -- histórico de qual motorista dirigiu qual 
   started_at
   ended_at (nullable)
 ```
+
+### Motorista autônomo
+
+Um motorista pode se cadastrar na plataforma **sem** estar vinculado a nenhuma
+transportadora — cadastra `cnh`, telefone e cadastra seu próprio veículo (`vehicles`
+com `owner_driver_id` preenchido, `carrier_id` nulo). Faz sentido especialmente para
+frete urbano/curta distância, onde é comum o próprio motorista ser o dono do veículo.
+
+Do ponto de vista do marketplace, um motorista autônomo funciona como uma
+"transportadora de um veículo só": ele mesmo oferta em `shipment_offers`
+(`driver_id` preenchido diretamente, `carrier_id` nulo), sem precisar de uma camada
+intermediária de empresa. Ver o impacto disso em `shipment_offers` e `ratings` abaixo, e
+o fluxo completo em [Precificação](08-precificacao.md).
 
 ## Cargas e Transporte
 
@@ -101,15 +117,18 @@ shipments                          -- a "solicitação de transporte" publicada 
   status              ENUM(ABERTA, ACEITA, EM_TRANSITO, ENTREGUE, CANCELADA)
   created_at
 
-shipment_offers                    -- ofertas/contrapropostas de transportadora sobre uma carga
+shipment_offers                    -- ofertas/contrapropostas sobre uma carga
   id                                -- fluxo completo em [Precificação](08-precificacao.md)
   shipment_id -> shipments.id
-  carrier_id -> companies.id
-  driver_id -> drivers.id (nullable até confirmar motorista)
+  carrier_id -> companies.id (nullable)   -- null quando é motorista autônomo ofertando direto
+  driver_id -> drivers.id
+    -- transportadora: nullable até confirmar motorista
+    -- motorista autônomo: preenchido desde a criação da oferta (é o próprio ofertante)
   vehicle_id -> vehicles.id (nullable até confirmar veículo)
   price_proposed                    -- = price_offered se aceite direto, diferente se contraproposta
   status              ENUM(PENDENTE, ACEITA, RECUSADA, CANCELADA)
   created_at
+  -- constraint de aplicação: carrier_id nulo ⇒ driver_id obrigatório (motorista autônomo)
 
 deliveries                         -- 1:1 com shipment quando offer é aceita
   id
@@ -154,13 +173,19 @@ driver_positions                    -- histórico bruto (pode virar tabela parti
 ratings
   id
   delivery_id -> deliveries.id
-  rater_company_id -> companies.id   -- quem avalia
-  rated_company_id -> companies.id   -- quem é avaliado
+  rater_company_id -> companies.id (nullable)
+  rater_driver_id -> drivers.id (nullable)     -- exatamente um dos dois "rater_*" preenchido
+  rated_company_id -> companies.id (nullable)
+  rated_driver_id -> drivers.id (nullable)     -- exatamente um dos dois "rated_*" preenchido
   score           (1-5)
   comment
   created_at
 ```
 
+Campos duplos (`*_company_id` / `*_driver_id`) porque tanto quem avalia quanto quem é
+avaliado pode ser uma empresa/transportadora **ou** um motorista autônomo direto — não
+existe sempre uma `company` nos dois lados da entrega.
+
 ---
 
-Ver também: [MVP](03-mvp.md) · [Arquitetura](04-arquitetura.md)
+Ver também: [MVP](03-mvp.md) · [Arquitetura e Decisões Técnicas](04-decisoes-em-aberto.md)

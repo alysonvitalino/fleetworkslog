@@ -8,9 +8,21 @@ da operação em tempo real.
 
 Três pilares:
 
-1. **Marketplace** — empresa publica carga, transportadora/motorista aceita
+1. **Marketplace** — empresa publica carga, transportadora ou motorista independente aceita
 2. **Gestão de Frota** — transportadora administra veículos, motoristas, disponibilidade
 3. **Rastreamento em Tempo Real** — GPS do motorista, visível para empresa/cliente
+
+## Motorista autônomo
+
+Além de transportadoras (com frota e motoristas vinculados), um **motorista independente**
+pode se cadastrar diretamente na plataforma com seu próprio veículo, sem estar ligado a
+nenhuma transportadora. Ele ofertа e executa entregas como qualquer outro participante do
+marketplace — é especialmente relevante para **fretes urbanos e de curta distância**, onde
+é comum o motorista ser dono do próprio veículo (van, utilitário, caminhão pequeno).
+
+Impacto direto no modelo de dados: `carrier_id` é opcional em `drivers`/`vehicles`, e
+`shipment_offers` pode vir de uma transportadora **ou** diretamente de um motorista
+autônomo. Detalhes em [Modelo de Dados](02-modelo-de-dados.md#motorista-autônomo).
 
 ## Modelo de negócio
 
@@ -43,7 +55,7 @@ Empresas que precisam transportar cargas hoje enfrentam:
 |---|---|
 | `EMPRESA` | Publica solicitações de transporte, acompanha entregas |
 | `TRANSPORTADORA` | Gerencia frota/motoristas, aceita cargas |
-| `MOTORISTA` | Executa o transporte, envia GPS, atualiza status |
+| `MOTORISTA` | Executa o transporte, envia GPS, atualiza status — com ou sem vínculo a uma transportadora |
 | `OPERADOR` | Opera a Torre de Controle (equipe da plataforma) |
 | `ADMIN` | Administração geral da plataforma |
 
@@ -51,6 +63,6 @@ Detalhes de autorização por perfil ficam em [Modelo de Dados](02-modelo-de-dad
 
 ---
 
-Ver também: [MVP](03-mvp.md) · [Modelo de Dados](02-modelo-de-dados.md) · [Arquitetura](04-arquitetura.md)
+Ver também: [MVP](03-mvp.md) · [Modelo de Dados](02-modelo-de-dados.md) · [Arquitetura e Decisões Técnicas](04-decisoes-em-aberto.md)
 
 Documento original (brainstorm completo): [`../init.md`](../init.md)
