@@ -10,9 +10,8 @@
 - Uma única rodada de negociação por oferta — sem contraproposta em cima de
   contraproposta (ver [Fora de escopo](#fora-de-escopo-do-mvp))
 
-Não exige mudança de schema em relação ao que já foi desenhado em
-[Modelo de Dados](02-modelo-de-dados.md) — `price_offered` e `price_proposed` já cobrem
-os dois valores. O que faltava era formalizar o fluxo e os estados.
+`price_offered` e `price_proposed` em [Modelo de Dados](02-modelo-de-dados.md) já cobrem
+os dois valores. A única mudança de schema foi o status `RETIRADA` em `shipment_offers`.
 
 ## Fluxo
 
@@ -36,7 +35,37 @@ Empresa revisa as ofertas recebidas (pode ter várias, de transportadoras difere
    └── Recusa a oferta de A           ──▶ offer(A).status = RECUSADA
                                             (negociação com A encerrada nesta carga —
                                              sem nova contraproposta)
+
+Enquanto a oferta está PENDENTE, o próprio ofertante pode desistir:
+   Transportadora A retira a oferta   ──▶ offer(A).status = RETIRADA
+
+Empresa cancela a carga (só enquanto ABERTA)
+   └──▶ shipment.status = CANCELADA
+        todas as offers PENDENTES dessa carga → CANCELADA
 ```
+
+## Quem pode ofertar de novo na mesma carga
+
+| Última oferta do ofertante | Pode ofertar de novo? |
+|---|---|
+| `RECUSADA` | **Não** — a recusa encerra a negociação daquele ofertante naquela carga, mesmo que a carga seja reaberta |
+| `RETIRADA` | Sim, enquanto a carga estiver `ABERTA` |
+| `CANCELADA` | Sim, se a carga voltar para `ABERTA` (ex.: entrega cancelada — ver [Cancelamento de entrega](02-modelo-de-dados.md#cancelamento-de-entrega)) |
+
+Nunca pode existir mais de uma oferta `PENDENTE` do mesmo ofertante na mesma carga.
+
+## Oferta sem motorista/veículo definido
+
+A transportadora pode ofertar **sem** informar motorista e veículo (`driver_id` e
+`vehicle_id` nulos) — assim não precisa reservar recurso para uma carga que talvez não
+ganhe. A empresa pode aceitar essa oferta normalmente; a `delivery` nasce em
+`COLETA_PENDENTE` e **só pode avançar para `COLETADO` depois que a transportadora
+atribuir motorista e veículo** (compatíveis com `required_vehicle_type` e capacidade da
+carga). A tela de ofertas da empresa mostra quando motorista/veículo ainda não foram
+definidos.
+
+O motorista autônomo sempre oferta com `driver_id` (ele mesmo) e `vehicle_id` (veículo
+próprio) preenchidos.
 
 ## Por que revisão manual, não "primeiro que aceitar leva"
 
@@ -61,8 +90,9 @@ se mais de um interessado topar a mesma carga.
 |---|---|
 | `PENDENTE` | Oferta/contraproposta enviada, aguardando decisão da empresa |
 | `ACEITA` | Empresa aceitou — vira uma `delivery` |
-| `RECUSADA` | Empresa recusou — negociação encerrada para esta oferta |
-| `CANCELADA` | Oferta perdeu validade porque a empresa aceitou outra transportadora para a mesma carga |
+| `RECUSADA` | Empresa recusou — negociação encerrada com esse ofertante nesta carga |
+| `RETIRADA` | O próprio ofertante desistiu enquanto a oferta estava PENDENTE |
+| `CANCELADA` | Encerrada pelo sistema: a empresa aceitou outra oferta, cancelou a carga, ou a entrega originada por esta oferta foi cancelada |
 
 Quando uma oferta é `ACEITA`, o backend deve, na mesma transação: marcar `shipment.status
 = ACEITA`, criar a `delivery`, e mover todas as outras `shipment_offers` PENDENTES
@@ -73,8 +103,8 @@ mesma carga).
 
 - **Rodadas múltiplas de contraproposta** (transportadora contrapropor de novo depois de
   recusada, empresa contrapropor de volta) — fica como negociação de uma via só;
-  se travar, as partes negociam fora da plataforma e a transportadora publica nova oferta
-  se quiser tentar de novo
+  oferta recusada encerra a negociação daquele ofertante naquela carga (ver
+  [Quem pode ofertar de novo](#quem-pode-ofertar-de-novo-na-mesma-carga))
 - **Leilão/melhor oferta automática** — empresa decide manualmente, sem ranking ou
   seleção automática por menor preço
 - **Notificação em tempo real de nova oferta/contraproposta** — cai na lista de

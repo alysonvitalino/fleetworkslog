@@ -15,8 +15,9 @@ ponta a ponta com dados reais.
    com veículo próprio — ver [Motorista Autônomo](02-modelo-de-dados.md#motorista-autônomo))
 4. Cadastro de veículo — de frota de transportadora **ou** próprio de motorista autônomo
 5. Empresa publica solicitação de transporte (`shipments`)
-6. Transportadora ou motorista autônomo visualiza cargas disponíveis e oferta/aceita uma
-   (`shipment_offers` → `deliveries`, ver [Precificação](08-precificacao.md))
+6. Transportadora (painel web) ou motorista autônomo (app) visualiza cargas disponíveis e
+   oferta/aceita uma (`shipment_offers` → `deliveries`, ver [Precificação](08-precificacao.md));
+   canal de cada perfil em [Monorepo](07-monorepo.md#canal-por-perfil)
 7. App do motorista envia GPS em foreground (background fica para depois — ver
    [fora do escopo](#fora-do-escopo-do-mvp))
 8. Empresa visualiza a carga no mapa em tempo real (WebSocket)
@@ -43,7 +44,8 @@ Explicitamente adiado — não é "esquecido", é decisão consciente para não 
   [Precificação](08-precificacao.md) (aceite ou uma contraproposta), sem cálculo
   automático de preço
 - **Roteirização / otimização de rota**
-- **Geofencing e alertas automáticos de atraso**
+- **Geofencing e alertas automáticos de atraso** — o campo `deliveries.is_late` já existe
+  no MVP, mas só a detecção automática entra depois
 - **Pagamentos** (Stripe ou qualquer gateway)
 - **Notificações push**
 - **Avaliação de parceiros** (rating) — schema existe, UI fica para depois

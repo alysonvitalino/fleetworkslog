@@ -57,6 +57,16 @@ ping só pra decidir se amostra ou não.
 com uma `delivery_id` ativa vinculada. Fora de uma entrega em andamento, só a posição
 atual em Redis é mantida (não há necessidade de histórico de GPS de motorista ocioso).
 
+**Pings fora de ordem**: quando o app reconecta, ele reenvia as posições que guardou
+enquanto estava offline. Por isso o backend só sobrescreve `driver:{driver_id}:position`
+se o `recorded_at` recebido for **mais recente** que o já salvo — senão uma posição antiga
+apagaria a atual. Pings antigos ainda passam pelo critério de amostragem (servem para o
+trajeto), mas não são publicados como "posição atual".
+
+**Quem pode ler a posição**: só quem tem vínculo com a entrega ativa do motorista (empresa
+dona da carga, transportadora do motorista, o próprio motorista) e `OPERADOR`/`ADMIN` —
+mesma regra das rooms WebSocket. Posição de motorista é dado pessoal (LGPD).
+
 ## Retenção
 
 - `driver_positions` de uma entrega concluída: manter por um período de auditoria/disputa

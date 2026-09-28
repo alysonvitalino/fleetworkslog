@@ -8,9 +8,11 @@ nomes de entidade aqui em português só para facilitar a leitura do documento.
 ```
 users
   id
-  email
+  name            -- nome da pessoa (motorista, responsável pela empresa, operador)
+  email           (único)
   password_hash
   role            ENUM(ADMIN, TRANSPORTADORA, MOTORISTA, EMPRESA, OPERADOR)
+  disabled_at     (nullable)  -- preenchido quando um ADMIN desativa o usuário (bloqueia login)
   created_at
   updated_at
 
@@ -41,9 +43,14 @@ companies
   document        (CNPJ)
   phone
   address_json    -- ou tabela separada `addresses` se precisar de múltiplos endereços
+  base_geo        GEOGRAPHY(Point, 4326) (nullable)  -- endereço-base geocodificado, usado no matching (TRANSPORTADORA)
   rating_avg
   created_at
 ```
+
+`base_geo` é o ponto de referência padrão da busca de cargas disponíveis por raio
+(ver [Matching de cargas](#matching-de-cargas-disponíveis)). Obrigatório para
+`TRANSPORTADORA`, não usado para `EMPRESA`.
 
 > Decisão em aberto: uma tabela `companies` com `type` vs. duas tabelas separadas
 > (`shippers` e `carriers`). Como ambas têm poucos campos divergentes hoje, uma tabela
@@ -61,7 +68,9 @@ drivers
   cnh_category
   phone
   status          ENUM(DISPONIVEL, EM_VIAGEM, INDISPONIVEL)
-  current_position_id -> driver_positions.id (nullable, última posição conhecida)
+  base_geo        GEOGRAPHY(Point, 4326) (nullable)  -- endereço-base, obrigatório para autônomo (matching)
+  rating_avg      (nullable)  -- reputação do motorista autônomo (equivalente a companies.rating_avg)
+  -- a posição atual NÃO fica no Postgres: vive no Redis (ver [Armazenamento de GPS](05-armazenamento-gps.md))
 
 vehicles
   id
@@ -85,7 +94,7 @@ driver_vehicles                    -- histórico de qual motorista dirigiu qual 
 ### Motorista autônomo
 
 Um motorista pode se cadastrar na plataforma **sem** estar vinculado a nenhuma
-transportadora — cadastra `cnh`, telefone e cadastra seu próprio veículo (`vehicles`
+transportadora — cadastra `cnh`, telefone, endereço-base (`base_geo`) e seu próprio veículo (`vehicles`
 com `owner_driver_id` preenchido, `carrier_id` nulo). Faz sentido especialmente para
 frete urbano/curta distância, onde é comum o próprio motorista ser o dono do veículo.
 
@@ -126,17 +135,21 @@ shipment_offers                    -- ofertas/contrapropostas sobre uma carga
     -- motorista autônomo: preenchido desde a criação da oferta (é o próprio ofertante)
   vehicle_id -> vehicles.id (nullable até confirmar veículo)
   price_proposed                    -- = price_offered se aceite direto, diferente se contraproposta
-  status              ENUM(PENDENTE, ACEITA, RECUSADA, CANCELADA)
+  status              ENUM(PENDENTE, ACEITA, RECUSADA, RETIRADA, CANCELADA)
   created_at
   -- constraint de aplicação: carrier_id nulo ⇒ driver_id obrigatório (motorista autônomo)
+  -- significado de cada status em [Precificação](08-precificacao.md#estados-de-shipment_offersstatus)
 
-deliveries                         -- 1:1 com shipment quando offer é aceita
+deliveries                         -- ativa: no máximo 1 por shipment (ver cancelamento abaixo)
   id
   shipment_id -> shipments.id
   offer_id -> shipment_offers.id
-  status              ENUM(COLETA_PENDENTE, COLETADO, EM_TRANSITO, ENTREGUE, ATRASADO, CANCELADO)
+  status              ENUM(COLETA_PENDENTE, COLETADO, EM_TRANSITO, ENTREGUE, CANCELADO)
+  is_late             boolean default false  -- atraso é flag, não status (ver abaixo)
+  late_detected_at    (nullable)
   picked_up_at
   delivered_at
+  cancelled_at        (nullable)
   proof_of_delivery_url    -- foto/assinatura
   created_at
 
@@ -148,6 +161,34 @@ delivery_status_events              -- histórico de mudanças de status (audito
   created_by -> users.id
   created_at
 ```
+
+### Atraso é flag, não status
+
+Uma entrega pode estar `EM_TRANSITO` **e** atrasada ao mesmo tempo — por isso o atraso
+fica em `is_late` / `late_detected_at`, e não como um valor do ENUM de status (o que
+apagaria o estado real da entrega). A detecção automática de atraso é pós-MVP
+(geofencing/ETA); no MVP o campo existe mas só é preenchido manualmente, se for.
+
+### Cancelamento de entrega
+
+Quando uma `delivery` é cancelada (empresa ou ADMIN):
+
+- `delivery.status = CANCELADO`, `cancelled_at` preenchido, evento em `delivery_status_events`
+- a oferta que originou a entrega vai para `CANCELADA`
+- a carga **volta para `ABERTA`** e recebe novas ofertas — inclusive dos ofertantes cujas
+  ofertas foram canceladas no aceite anterior; a empresa pode cancelar a carga depois se
+  preferir
+- motorista e veículo voltam para `DISPONIVEL`
+
+Por isso a unicidade é "no máximo uma delivery **não cancelada** por shipment" (índice
+único parcial), e não 1:1 absoluto.
+
+## Matching de cargas disponíveis
+
+A busca de cargas por raio (`ST_DWithin`) usa como ponto de referência padrão o
+`base_geo` do ofertante — `companies.base_geo` da transportadora ou `drivers.base_geo` do
+motorista autônomo. O cliente pode sobrescrever esse ponto na busca (ex.: posição GPS
+atual do autônomo ou outra cidade escolhida no filtro).
 
 ## Posições GPS
 
