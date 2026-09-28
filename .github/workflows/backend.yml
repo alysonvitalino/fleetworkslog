@@ -1,0 +1,75 @@
+name: backend
+
+on:
+  pull_request:
+    paths: &paths
+      - 'backend/**'
+      - 'shared/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.base.json'
+      - 'eslint.config.js'
+      - '.github/workflows/backend.yml'
+  push:
+    branches: [main]
+    paths: *paths
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6-alpine
+        env:
+          POSTGRES_USER: fleetworkslog
+          POSTGRES_PASSWORD: fleetworkslog
+          POSTGRES_DB: fleetworkslog_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U fleetworkslog -d fleetworkslog_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependências (compila o shared no postinstall)
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint backend shared
+
+      - name: Typecheck
+        run: |
+          npm run typecheck --workspace=shared
+          npm run typecheck --workspace=backend
+
+      - name: Testes unitários
+        run: |
+          npm test --workspace=shared
+          npm test --workspace=backend
+
+      - name: Testes de integração (Postgres/PostGIS + Redis)
+        run: npm run test:integration --workspace=backend
+        env:
+          TEST_DATABASE_URL: postgres://fleetworkslog:fleetworkslog@localhost:5432/fleetworkslog_test
+          TEST_REDIS_URL: redis://localhost:6379/1
+
+      - name: Build
+        run: npm run build --workspace=backend

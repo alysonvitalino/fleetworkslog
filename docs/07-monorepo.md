@@ -40,12 +40,15 @@ fleetworkslog/
 │   │       └── operacao/   # Torre de Controle / admin (OPERADOR, ADMIN)
 │   └── package.json
 │
-├── mobile/                 # React Native (Expo) + TypeScript
+├── mobile/                 # React Native (Expo SDK 57 + Expo Router) + TypeScript
 │   ├── src/
-│   │   ├── navigation/     # navegação condicional por role
-│   │   └── screens/
-│   │       ├── motorista/  # inclui telas de marketplace do autônomo
-│   │       └── empresa/
+│   │   ├── app/            # rotas (Expo Router): cada arquivo é uma tela
+│   │   │   ├── index.tsx   # redireciona conforme o role logado
+│   │   │   ├── motorista/  # inclui telas de marketplace do autônomo
+│   │   │   └── empresa/
+│   │   ├── components/
+│   │   ├── features/       # lógica por domínio (sessão, health, ...)
+│   │   └── lib/            # cliente HTTP, env, armazenamento seguro de tokens
 │   └── package.json
 │
 ├── shared/                 # tipos e contratos compartilhados (enums, DTOs, eventos WebSocket)
@@ -53,10 +56,26 @@ fleetworkslog/
 │   └── package.json
 │
 ├── docs/
-├── docker-compose.yml       # PostgreSQL + Redis
+├── docker-compose.yml       # PostgreSQL + PostGIS + Redis
 ├── init.md
 └── package.json              # orquestração (workspaces + scripts raiz)
 ```
+
+### Navegação do mobile: Expo Router
+
+Decidido usar **Expo Router** (padrão atual do Expo) em vez de React Navigation manual.
+As áreas de cada perfil são pastas reais (`motorista/`, `empresa/`) — não grupos
+`(motorista)`, porque dois `index` em grupos diferentes resolveriam para a mesma URL `/`.
+A rota `index.tsx` decide para onde mandar o usuário pelo role; perfis que não usam o app
+(TRANSPORTADORA, OPERADOR, ADMIN) caem em `usar-painel-web`.
+
+### Uma única versão de React no monorepo
+
+O Expo SDK fixa a versão do React (hoje `19.2.3`). O `package.json` raiz tem `overrides`
+de `react`/`react-dom` nessa versão para impedir que web e mobile instalem cópias
+diferentes — duas cópias do React quebram os hooks em runtime. Consequência: o web usa
+React Router 7 (o 8 exige `react-dom >= 19.2.7`). **Ao atualizar o SDK do Expo, atualizar
+o `overrides` junto.**
 
 ## Por que um único app mobile (não um app por perfil)
 
