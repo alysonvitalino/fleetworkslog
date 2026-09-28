@@ -2,33 +2,54 @@
 
 ## Decisão
 
-Um único repositório com três pastas na raiz — `backend/`, `web/`, `mobile/` — e um
-único app React Native que muda de fluxo/navegação conforme o `role` do usuário logado
-(não um app separado por perfil).
+Um único repositório com quatro pastas na raiz — `backend/`, `web/`, `mobile/` e
+`shared/` (tipos/contratos compartilhados) — e um único app React Native que muda de
+fluxo/navegação conforme o `role` do usuário logado (não um app separado por perfil).
+
+## Canal por perfil
+
+| Perfil | Canal | O que faz lá |
+|---|---|---|
+| `EMPRESA` | Mobile | Publica e gerencia cargas, revisa ofertas, acompanha entregas no mapa, histórico |
+| `MOTORISTA` (de transportadora) | Mobile | Entregas atribuídas, status, GPS, comprovante |
+| `MOTORISTA` autônomo | Mobile | Tudo do motorista + cadastro do veículo próprio, cargas disponíveis e ofertas |
+| `TRANSPORTADORA` | **Web** | Cadastro, frota (motoristas e veículos), cargas disponíveis e ofertas, atribuição de motorista/veículo, acompanhamento das entregas, histórico |
+| `OPERADOR` / `ADMIN` | Web | Torre de Controle e administração |
+
+Se um usuário `TRANSPORTADORA` fizer login no app mobile, o app mostra uma tela
+orientando a usar o painel web (sem fluxo próprio no mobile). O web, por sua vez, não
+tem fluxo para `EMPRESA` nem `MOTORISTA` no MVP.
 
 ## Estrutura
 
 ```
 fleetworkslog/
-├── backend/              # Node.js + TypeScript — API REST + WebSocket
+├── backend/              # Node.js + TypeScript + Express — API REST + WebSocket
 │   ├── src/
 │   │   ├── routes/
 │   │   ├── controllers/
 │   │   ├── services/
 │   │   ├── models/
-│   │   └── db/
+│   │   └── db/           # conexão Knex, migrations e seeds
 │   └── package.json
 │
-├── web/                   # React + TypeScript — Torre de Controle
+├── web/                   # React + TypeScript — painel da transportadora + Torre de Controle
 │   ├── src/
+│   │   └── pages/
+│   │       ├── transportadora/
+│   │       └── operacao/   # Torre de Controle / admin (OPERADOR, ADMIN)
 │   └── package.json
 │
 ├── mobile/                 # React Native (Expo) + TypeScript
 │   ├── src/
 │   │   ├── navigation/     # navegação condicional por role
 │   │   └── screens/
-│   │       ├── motorista/
+│   │       ├── motorista/  # inclui telas de marketplace do autônomo
 │   │       └── empresa/
+│   └── package.json
+│
+├── shared/                 # tipos e contratos compartilhados (enums, DTOs, eventos WebSocket)
+│   ├── src/
 │   └── package.json
 │
 ├── docs/
@@ -54,7 +75,7 @@ de `screens/` já separada por perfil.
 
 ## Orquestração
 
-- **npm workspaces** na raiz (`backend`, `web`, `mobile` como workspaces) — evita
+- **npm workspaces** na raiz (`backend`, `web`, `mobile`, `shared` como workspaces) — evita
   duplicar `node_modules` de dependências compartilhadas e permite instalar tudo com um
   único `npm install` na raiz
 - Scripts raiz via `concurrently` para rodar backend + web juntos em dev; mobile roda
@@ -64,7 +85,7 @@ de `screens/` já separada por perfil.
 ```json
 // package.json (raiz) — esboço
 {
-  "workspaces": ["backend", "web", "mobile"],
+  "workspaces": ["backend", "web", "mobile", "shared"],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=web\"",
     "dev:mobile": "npm run start --workspace=mobile",
@@ -73,6 +94,17 @@ de `screens/` já separada por perfil.
   }
 }
 ```
+
+## Pacote `shared/`
+
+Enums (`Role`, `CompanyType`, `DriverStatus`, `VehicleType`, `VehicleStatus`,
+`ShipmentStatus`, `OfferStatus`, `DeliveryStatus`), DTOs de request/response e tipos dos
+eventos WebSocket ficam em `shared/`, consumido pelos outros três workspaces. Uma mudança
+de contrato quebra a compilação em todo lugar que ficou inconsistente — é exatamente o
+motivo de manter tudo num repo só na fase de MVP (ver abaixo).
+
+Só tipos e constantes puras entram aqui — nada que dependa de Node, React ou React Native,
+para o pacote funcionar nos três ambientes.
 
 ## Por que não múltiplos repositórios
 
@@ -88,7 +120,8 @@ de `screens/` já separada por perfil.
 
 Um pipeline por pasta (`backend`, `web`, `mobile`), disparado só quando os arquivos
 daquela pasta mudam (path filters) — evita rodar build/test de mobile numa mudança que
-só tocou o backend, por exemplo. Detalhamento fica para quando o CI for configurado
+só tocou o backend, por exemplo. Mudanças em `shared/` disparam os três pipelines, já
+que afetam todos os consumidores. Detalhamento fica para quando o CI for configurado
 (fora do escopo deste documento de planejamento).
 
 ---

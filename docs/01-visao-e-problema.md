@@ -51,15 +51,16 @@ Empresas que precisam transportar cargas hoje enfrentam:
 
 ## Perfis de usuário
 
-| Perfil | Papel |
-|---|---|
-| `EMPRESA` | Publica solicitações de transporte, acompanha entregas |
-| `TRANSPORTADORA` | Gerencia frota/motoristas, aceita cargas |
-| `MOTORISTA` | Executa o transporte, envia GPS, atualiza status — com ou sem vínculo a uma transportadora |
-| `OPERADOR` | Opera a Torre de Controle (equipe da plataforma) |
-| `ADMIN` | Administração geral da plataforma |
+| Perfil | Papel | Canal |
+|---|---|---|
+| `EMPRESA` | Publica solicitações de transporte, acompanha entregas | Mobile |
+| `TRANSPORTADORA` | Gerencia frota/motoristas, aceita cargas | Web |
+| `MOTORISTA` | Executa o transporte, envia GPS, atualiza status — com ou sem vínculo a uma transportadora (o autônomo também oferta em cargas) | Mobile |
+| `OPERADOR` | Opera a Torre de Controle (equipe da plataforma) | Web |
+| `ADMIN` | Administração geral da plataforma | Web |
 
-Detalhes de autorização por perfil ficam em [Modelo de Dados](02-modelo-de-dados.md#autenticação-e-perfis).
+Detalhes de autorização por perfil ficam em [Modelo de Dados](02-modelo-de-dados.md#autenticação-e-perfis);
+canal por perfil em [Monorepo](07-monorepo.md#canal-por-perfil).
 
 ---
 
