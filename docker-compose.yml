@@ -1,0 +1,42 @@
+name: fleetworkslog
+
+services:
+  postgres:
+    image: postgis/postgis:18-3.6-alpine
+    container_name: fleetworkslog-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fleetworkslog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fleetworkslog}
+      POSTGRES_DB: ${POSTGRES_DB:-fleetworkslog}
+    ports:
+      # Porta 5437 no host para não conflitar com os outros projetos do workspace
+      - '${POSTGRES_PORT:-5437}:5432'
+    volumes:
+      # Postgres 18+: o volume monta em /var/lib/postgresql (não mais em /data)
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    container_name: fleetworkslog-redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6382}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:
