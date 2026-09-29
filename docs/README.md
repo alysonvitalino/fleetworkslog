@@ -11,6 +11,7 @@ Projeto em fase de planejamento. Documentação organizada em:
 7. [Monorepo](07-monorepo.md) — `backend/` + `web/` + `mobile/` + `shared/`, npm workspaces, app RN único, canal por perfil
 8. [Precificação](08-precificacao.md) — empresa sugere, transportadora aceita ou contrapropõe, empresa decide
 9. [GPS em Background](09-gps-background.md) — `expo-location`, revisar pós-validação
+10. [Primeiro Uso](10-primeiro-uso.md) — subir o projeto do zero, rodar os testes e percorrer o fluxo completo pela API
 
 O brainstorm original e completo (visão expandida, evolução do produto, todos os pilares
 detalhados) continua em [`../init.md`](../init.md) — os documentos acima são um recorte

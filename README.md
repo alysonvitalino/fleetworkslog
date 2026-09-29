@@ -5,6 +5,10 @@ motoristas autônomos, com gestão de frota e rastreamento GPS em tempo real.
 
 Documentação de produto e decisões técnicas em [`docs/`](docs/README.md).
 
+> **Primeira vez no projeto?** Comece pelo [Guia de Primeiro Uso](docs/10-primeiro-uso.md):
+> setup do zero, testes, roteiro para percorrer o fluxo completo pela API (publicar carga →
+> ofertar → aceitar → entregar) com os dados do seed e solução dos problemas mais comuns.
+
 ## Estrutura
 
 | Pasta      | O que é                                      | Stack                                                  |
@@ -22,6 +26,9 @@ Documentação de produto e decisões técnicas em [`docs/`](docs/README.md).
   _development build_, não no Expo Go
 
 ## Setup
+
+Resumo rápido abaixo — o passo a passo completo, com verificações e troubleshooting, está
+no [Guia de Primeiro Uso](docs/10-primeiro-uso.md).
 
 ```bash
 nvm use
