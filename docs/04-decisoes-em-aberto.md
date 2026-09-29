@@ -74,6 +74,13 @@ em Android se mostrar insuficiente antes disso. Detalhes e critérios de revisã
 [GPS em Background](09-gps-background.md). Feature em si fica fora do MVP
 (ver [MVP](03-mvp.md#fora-do-escopo-do-mvp)).
 
+### ~~`companies` única vs. tabelas separadas~~ — decidido
+
+Uma tabela `companies` com `type` (`EMPRESA` / `TRANSPORTADORA`): hoje só `base_geo`
+diverge entre os dois, e a regra "obrigatório para transportadora" fica num `CHECK` do
+banco. Revisar se a transportadora ganhar muitos campos próprios (frota, certificações).
+Ver [Modelo de Dados](02-modelo-de-dados.md#empresas-e-transportadoras).
+
 ## Decisões pendentes
 
 Ainda não fechadas — precisam de decisão antes (ou durante) a task indicada:
@@ -83,7 +90,6 @@ Ainda não fechadas — precisam de decisão antes (ou durante) a task indicada:
 | Hospedagem do staging (backend com WebSocket, web, Postgres+PostGIS, Redis) | Provisionamento de staging | Precisa suportar conexões WebSocket persistentes e extensão PostGIS |
 | Storage de arquivos (comprovante de entrega) | Comprovante de entrega | S3 compatível com URL assinada |
 | Provedor de e-mail transacional | Convite de motorista, recuperação de senha | — |
-| `companies` única com `type` vs. tabelas separadas | Migrations de cadastros | Ver [Modelo de Dados](02-modelo-de-dados.md#empresas-e-transportadoras) |
 | Tratamento de dados pessoais (LGPD) | Piloto com usuários reais | GPS, CNH, CPF — consentimento, acesso, retenção e exclusão |
 
 ---

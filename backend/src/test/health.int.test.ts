@@ -29,6 +29,7 @@ describe('integração com Postgres e Redis', () => {
     const app = createApp({
       logger: createLogger('silent'),
       corsOrigins: [],
+      db: knex,
       healthChecks: { postgres: () => knex.raw('SELECT 1'), redis: () => redis.ping() },
     });
     const response = await request(app).get('/health');

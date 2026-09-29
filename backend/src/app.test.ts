@@ -1,14 +1,18 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createApp } from './app.js';
+import { createKnex } from './db/knex.js';
 import { createLogger } from './lib/logger.js';
 
 const logger = createLogger('silent');
+// O Knex só conecta na primeira query: estes testes nunca chegam a tocar no banco
+const db = createKnex('postgres://unused@localhost:1/unused');
 
 function buildApp(postgresUp = true, redisUp = true) {
   return createApp({
     logger,
     corsOrigins: ['http://localhost:5173'],
+    db,
     healthChecks: {
       postgres: () => (postgresUp ? Promise.resolve() : Promise.reject(new Error('down'))),
       redis: () => (redisUp ? Promise.resolve() : Promise.reject(new Error('down'))),
