@@ -18,6 +18,7 @@ await redis.connect().catch((error: unknown) => {
 const app = createApp({
   logger,
   corsOrigins: env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
+  db: knex,
   healthChecks: {
     postgres: () => knex.raw('SELECT 1'),
     redis: () => redis.ping(),

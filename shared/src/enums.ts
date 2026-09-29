@@ -72,6 +72,20 @@ export const DeliveryStatus = {
 } as const;
 export type DeliveryStatus = ValueOf<typeof DeliveryStatus>;
 
+// Status que o usuário pode definir à mão. EM_VIAGEM só é setado/liberado pelo fluxo
+// da entrega (coleta → entrega/cancelamento), nunca por estas rotas.
+export const ManualDriverStatus = {
+  DISPONIVEL: 'DISPONIVEL',
+  INDISPONIVEL: 'INDISPONIVEL',
+} as const;
+export type ManualDriverStatus = ValueOf<typeof ManualDriverStatus>;
+
+export const ManualVehicleStatus = {
+  DISPONIVEL: 'DISPONIVEL',
+  MANUTENCAO: 'MANUTENCAO',
+} as const;
+export type ManualVehicleStatus = ValueOf<typeof ManualVehicleStatus>;
+
 /**
  * Cria uma função que verifica se um valor desconhecido pertence ao conjunto.
  * Útil para validar dados vindos da API, do banco ou de eventos WebSocket.

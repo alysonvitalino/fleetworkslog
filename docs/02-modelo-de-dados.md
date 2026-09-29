@@ -52,10 +52,10 @@ companies
 (ver [Matching de cargas](#matching-de-cargas-disponíveis)). Obrigatório para
 `TRANSPORTADORA`, não usado para `EMPRESA`.
 
-> Decisão em aberto: uma tabela `companies` com `type` vs. duas tabelas separadas
-> (`shippers` e `carriers`). Como ambas têm poucos campos divergentes hoje, uma tabela
-> só simplifica — mas revisar se `TRANSPORTADORA` ganhar muitos campos específicos
-> (frota, capacidade, certificações) que não fazem sentido para `EMPRESA`.
+> Decidido: uma tabela `companies` com `type`, em vez de `shippers` e `carriers`
+> separadas. Como ambas têm poucos campos divergentes hoje, uma tabela só simplifica —
+> mas revisar se `TRANSPORTADORA` ganhar muitos campos específicos (frota, capacidade,
+> certificações) que não fazem sentido para `EMPRESA`.
 
 ## Motoristas e Veículos
 

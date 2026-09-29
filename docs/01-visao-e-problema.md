@@ -2,7 +2,7 @@
 
 ## Visão
 
-Plataforma de logística B2B — não um "Uber genérico", mas um marketplace focado em
+Plataforma de logística B2B — Um marketplace focado em
 **transportadoras e frotas de caminhão** para transporte de cargas, com acompanhamento
 da operação em tempo real.
 

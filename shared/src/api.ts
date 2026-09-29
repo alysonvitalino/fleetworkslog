@@ -20,3 +20,11 @@ export interface ApiErrorBody {
     details?: unknown;
   };
 }
+
+/** Resposta padrão das listagens paginadas (`?limit=&offset=`). */
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
