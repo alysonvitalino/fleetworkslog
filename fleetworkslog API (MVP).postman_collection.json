@@ -1,0 +1,1994 @@
+{
+  "info": {
+    "_postman_id": "6032410b-cf4c-41b1-aec8-0d6b11ef5ea9",
+    "name": "fleetworkslog API (MVP)",
+    "description": "Todos os endpoints do backend do fleetworkslog, na ordem do fluxo básico do MVP: empresa publica carga → transportadora/autônomo oferta ou contrapropõe → empresa aceita → transportadora atribui motorista e veículo → motorista coleta, transporta e entrega. A pasta 09 cobre os cadastros (empresa, transportadora, motoristas da frota e autônomo).\n\n**Antes de rodar**\n1. Suba a API local (`npm run dev` na raiz; porta 3001).\n2. Rode `npm run db:seed`: as pastas 01 a 08 usam os IDs fixos do seed (variáveis desta collection). A pasta 09 não depende do seed, pois cria contas novas a cada execução (CNPJ válido, e-mail e CNH gerados). Usuários do seed têm a senha `dev12345`.\n\n**Como rodar**: Collection Runner, na ordem das pastas. Cada requisição tem teste de status e as que criam algo guardam o ID em variáveis da collection para as próximas. Dá para rodar várias vezes; rode o seed de novo para zerar os dados base.\n\nAs rotas ainda não têm autenticação: o dono do recurso vai no path (PUTF-24 vai proteger).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55442322",
+    "_collection_link": "https://go.postman.co/collection/55442322-6032410b-cf4c-41b1-aec8-0d6b11ef5ea9?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "00 Saúde",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Veículos (PUTF-33/34)",
+      "item": [
+        {
+          "name": "Criar veículo da frota",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"{{randomPlate}}\",\n  \"type\": \"VAN\",\n  \"capacityKg\": 1500,\n  \"capacityM3\": 8.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/vehicles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "vehicles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar veículos da frota",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/vehicles?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "vehicles"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhar veículo da frota",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/vehicles/{{vehicleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "vehicles",
+                "{{vehicleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar veículo da frota",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacityKg\": 1800\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/vehicles/{{vehicleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "vehicles",
+                "{{vehicleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Veículo em manutenção",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"MANUTENCAO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/vehicles/{{vehicleId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "vehicles",
+                "{{vehicleId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Veículo disponível",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DISPONIVEL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/vehicles/{{vehicleId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "vehicles",
+                "{{vehicleId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remover veículo da frota",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/vehicles/{{vehicleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "vehicles",
+                "{{vehicleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Criar veículo do autônomo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"{{randomPlate}}\",\n  \"type\": \"VAN\",\n  \"capacityKg\": 1200,\n  \"capacityM3\": 7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/vehicles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "vehicles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar veículos do autônomo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/vehicles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "vehicles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remover veículo do autônomo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/vehicles/{{autonomousExtraVehicleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "vehicles",
+                "{{autonomousExtraVehicleId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "CRUD de veículos da frota da transportadora e do veículo próprio do motorista autônomo, e troca manual de status."
+    },
+    {
+      "name": "02 Status de motoristas (PUTF-34)",
+      "item": [
+        {
+          "name": "Motorista da frota indisponível",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INDISPONIVEL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/drivers/{{carrierDriverId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "drivers",
+                "{{carrierDriverId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Motorista da frota disponível",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DISPONIVEL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/drivers/{{carrierDriverId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "drivers",
+                "{{carrierDriverId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autônomo indisponível",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INDISPONIVEL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autônomo disponível",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DISPONIVEL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Cargas da empresa (PUTF-37)",
+      "item": [
+        {
+          "name": "Publicar carga",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin\": { \"address\": \"Av. Paulista, 1000 - São Paulo/SP\", \"lat\": -23.5613, \"lng\": -46.6565 },\n  \"destination\": { \"address\": \"Av. Brasil, 500 - Campinas/SP\", \"lat\": -22.9056, \"lng\": -47.0608 },\n  \"cargoType\": \"Eletrônicos\",\n  \"weightKg\": 1200,\n  \"volumeM3\": 6,\n  \"requiredVehicleType\": \"TRUCK_TOCO\",\n  \"pickupWindowStart\": \"{{pickupWindowStart}}\",\n  \"pickupWindowEnd\": \"{{pickupWindowEnd}}\",\n  \"deliveryDeadline\": \"{{deliveryDeadline}}\",\n  \"specialRequirements\": \"Carga frágil\",\n  \"priceOffered\": 3000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar cargas abertas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments?status=ABERTA&limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ABERTA"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhar carga",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments/{{shipmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments",
+                "{{shipmentId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar carga",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priceOffered\": 3200,\n  \"specialRequirements\": \"Carga frágil - manusear com cuidado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments/{{shipmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments",
+                "{{shipmentId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publicar carga para cancelar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin\": { \"address\": \"Rua Augusta, 200 - São Paulo/SP\", \"lat\": -23.5534, \"lng\": -46.6582 },\n  \"destination\": { \"address\": \"Centro - Jundiaí/SP\", \"lat\": -23.1857, \"lng\": -46.8978 },\n  \"cargoType\": \"Móveis\",\n  \"weightKg\": 800,\n  \"volumeM3\": 10,\n  \"requiredVehicleType\": \"TRUCK_TOCO\",\n  \"pickupWindowStart\": \"{{pickupWindowStart}}\",\n  \"pickupWindowEnd\": \"{{pickupWindowEnd}}\",\n  \"deliveryDeadline\": \"{{deliveryDeadline}}\",\n  \"priceOffered\": 1500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancelar carga",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments/{{shipmentToCancelId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments",
+                "{{shipmentToCancelId}}",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Marketplace - quem oferta (PUTF-39/40)",
+      "item": [
+        {
+          "name": "Cargas disponíveis (transportadora A)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/available-shipments?radiusKm=100&limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "available-shipments"
+              ],
+              "query": [
+                {
+                  "key": "radiusKm",
+                  "value": "100"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cargas disponíveis (autônomo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/available-shipments?radiusKm=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "available-shipments"
+              ],
+              "query": [
+                {
+                  "key": "radiusKm",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Contraproposta da transportadora A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priceProposed\": 2900\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/shipments/{{shipmentId}}/offers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "shipments",
+                "{{shipmentId}}",
+                "offers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transportadora B aceita o preço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priceProposed\": 3200\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierBId}}/shipments/{{shipmentId}}/offers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierBId}}",
+                "shipments",
+                "{{shipmentId}}",
+                "offers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autônomo aceita o preço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priceProposed\": 3200,\n  \"vehicleId\": \"{{autonomousVehicleId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/shipments/{{shipmentId}}/offers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "shipments",
+                "{{shipmentId}}",
+                "offers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Minhas ofertas (transportadora A)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/offers?status=PENDENTE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "offers"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDENTE"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Minhas ofertas (autônomo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/offers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "offers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autônomo retira a oferta",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/offers/{{autonomousOfferId}}/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "offers",
+                "{{autonomousOfferId}}",
+                "withdraw"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Empresa decide (PUTF-41)",
+      "item": [
+        {
+          "name": "Ofertas recebidas na carga",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments/{{shipmentId}}/offers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments",
+                "{{shipmentId}}",
+                "offers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Recusar oferta da transportadora B",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments/{{shipmentId}}/offers/{{carrierBOfferId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments",
+                "{{shipmentId}}",
+                "offers",
+                "{{carrierBOfferId}}",
+                "reject"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Aceitar contraproposta da transportadora A",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments/{{shipmentId}}/offers/{{offerId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments",
+                "{{shipmentId}}",
+                "offers",
+                "{{offerId}}",
+                "accept"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Atribuição de motorista e veículo (PUTF-42)",
+      "item": [
+        {
+          "name": "Atribuir motorista e veículo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverId\": \"{{carrierDriverId}}\",\n  \"vehicleId\": \"{{carrierVehicleId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{carrierAId}}/offers/{{offerId}}/assignment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{carrierAId}}",
+                "offers",
+                "{{offerId}}",
+                "assignment"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 Transporte - motorista (PUTF-46)",
+      "item": [
+        {
+          "name": "Entregas do motorista",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{carrierDriverId}}/deliveries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{carrierDriverId}}",
+                "deliveries"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirmar coleta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COLETADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{carrierDriverId}}/deliveries/{{deliveryId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{carrierDriverId}}",
+                "deliveries",
+                "{{deliveryId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Iniciar trânsito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EM_TRANSITO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{carrierDriverId}}/deliveries/{{deliveryId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{carrierDriverId}}",
+                "deliveries",
+                "{{deliveryId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirmar entrega",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ENTREGUE\",\n  \"note\": \"Recebido pela portaria\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{carrierDriverId}}/deliveries/{{deliveryId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{carrierDriverId}}",
+                "deliveries",
+                "{{deliveryId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Empresa acompanha a entrega",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/deliveries/{{deliveryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "deliveries",
+                "{{deliveryId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 Cancelamento de entrega (PUTF-46)",
+      "item": [
+        {
+          "name": "Publicar carga (cancelamento)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin\": { \"address\": \"Av. Paulista, 1500 - São Paulo/SP\", \"lat\": -23.5617, \"lng\": -46.6560 },\n  \"destination\": { \"address\": \"Centro - Campinas/SP\", \"lat\": -22.9056, \"lng\": -47.0608 },\n  \"cargoType\": \"Alimentos\",\n  \"weightKg\": 900,\n  \"volumeM3\": 4,\n  \"requiredVehicleType\": \"TRUCK_TOCO\",\n  \"pickupWindowStart\": \"{{pickupWindowStart}}\",\n  \"pickupWindowEnd\": \"{{pickupWindowEnd}}\",\n  \"deliveryDeadline\": \"{{deliveryDeadline}}\",\n  \"priceOffered\": 1800\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autônomo oferta na carga",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priceProposed\": 1800,\n  \"vehicleId\": \"{{autonomousVehicleId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{autonomousDriverId}}/shipments/{{shipment3Id}}/offers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{autonomousDriverId}}",
+                "shipments",
+                "{{shipment3Id}}",
+                "offers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Empresa aceita oferta do autônomo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/shipments/{{shipment3Id}}/offers/{{offer3Id}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "shipments",
+                "{{shipment3Id}}",
+                "offers",
+                "{{offer3Id}}",
+                "accept"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Empresa cancela a entrega",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Carga não ficou pronta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{shipperId}}/deliveries/{{delivery3Id}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{shipperId}}",
+                "deliveries",
+                "{{delivery3Id}}",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 Cadastros (PUTF-29/30/31/32)",
+      "item": [
+        {
+          "name": "Cadastrar empresa",
+          "event": [
+            {
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// CNPJ válido e e-mail únicos a cada execução",
+                  "const dv = (s) => { const w = s.length === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2]; const r = w.reduce((a, x, i) => a + Number(s[i]) * x, 0) % 11; return r < 2 ? 0 : 11 - r; };",
+                  "const base = String(Math.floor(Math.random() * 1e8)).padStart(8, '0') + '0001';",
+                  "const d1 = dv(base);",
+                  "pm.collectionVariables.set('newCnpj', base + d1 + dv(base + d1));",
+                  "pm.collectionVariables.set('newEmail', `empresa.${Date.now()}@dev.local`);"
+                ]
+              },
+              "listen": "prerequest"
+            },
+            {
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.test('usuário EMPRESA criado', () => pm.expect(body.user.role).to.eql('EMPRESA'));",
+                  "  pm.collectionVariables.set('newShipperId', body.id);",
+                  "}"
+                ]
+              },
+              "listen": "test"
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "value": "application/json",
+                "key": "Content-Type"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana Silva\",\n  \"email\": \"{{newEmail}}\",\n  \"password\": \"senha-forte\",\n  \"legalName\": \"Empresa Ana LTDA\",\n  \"document\": \"{{newCnpj}}\",\n  \"phone\": \"(11) 98765-4321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/signup/empresa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "signup",
+                "empresa"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar empresa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{newShipperId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{newShipperId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar empresa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('dados atualizados', () => pm.expect(pm.response.json().legalName).to.eql('Empresa Ana Comércio LTDA'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "value": "application/json",
+                "key": "Content-Type"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legalName\": \"Empresa Ana Comércio LTDA\",\n  \"address\": { \"address\": \"Av. Paulista, 1000 - São Paulo/SP\", \"lat\": -23.5613, \"lng\": -46.6565 }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{newShipperId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "companies",
+                "{{newShipperId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cadastrar transportadora",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// CNPJ válido e e-mail únicos a cada execução",
+                  "const dv = (s) => { const w = s.length === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2]; const r = w.reduce((a, x, i) => a + Number(s[i]) * x, 0) % 11; return r < 2 ? 0 : 11 - r; };",
+                  "const base = String(Math.floor(Math.random() * 1e8)).padStart(8, '0') + '0001';",
+                  "const d1 = dv(base);",
+                  "pm.collectionVariables.set('newCnpj', base + d1 + dv(base + d1));",
+                  "pm.collectionVariables.set('newEmail', `transportadora.${Date.now()}@dev.local`);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.test('endereço-base salvo', () => pm.expect(body.address).to.not.eql(null));",
+                  "  pm.collectionVariables.set('newCarrierId', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "value": "application/json",
+                "key": "Content-Type"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Carlos Transportes\",\n  \"email\": \"{{newEmail}}\",\n  \"password\": \"senha-forte\",\n  \"legalName\": \"Transportes Carlos LTDA\",\n  \"document\": \"{{newCnpj}}\",\n  \"phone\": \"11912345678\",\n  \"address\": { \"address\": \"Rua da Consolação, 100 - São Paulo/SP\", \"lat\": -23.5505, \"lng\": -46.6333 }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/signup/transportadora",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "signup",
+                "transportadora"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cadastrar motorista da frota",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newEmail', `motorista.frota.${Date.now()}@dev.local`);",
+                  "pm.collectionVariables.set('newCnh', String(Math.floor(Math.random() * 1e11)).padStart(11, '0'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.test('aguardando convite (sem senha)', () => pm.expect(body.invitePending).to.eql(true));",
+                  "  pm.collectionVariables.set('newCarrierDriverId', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "value": "application/json",
+                "key": "Content-Type"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Diego Motorista\",\n  \"email\": \"{{newEmail}}\",\n  \"cnhNumber\": \"{{newCnh}}\",\n  \"cnhCategory\": \"E\",\n  \"phone\": \"11987651234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{newCarrierId}}/drivers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{newCarrierId}}",
+                "drivers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar motoristas da frota",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('lista só os motoristas desta transportadora', () => pm.expect(pm.response.json().total).to.eql(1));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{newCarrierId}}/drivers?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{newCarrierId}}",
+                "drivers"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhar motorista da frota",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{newCarrierId}}/drivers/{{newCarrierDriverId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{newCarrierId}}",
+                "drivers",
+                "{{newCarrierDriverId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar motorista da frota",
+          "event": [
+            {
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('dados atualizados', () => pm.expect(pm.response.json()).to.include({ name: 'Diego Souza', cnhCategory: 'D', phone: null }));"
+                ],
+                "type": "text/javascript"
+              },
+              "listen": "test"
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Diego Souza\",\n  \"cnhCategory\": \"D\",\n  \"phone\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{newCarrierId}}/drivers/{{newCarrierDriverId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{newCarrierId}}",
+                "drivers",
+                "{{newCarrierDriverId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remover motorista da frota",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carriers/{{newCarrierId}}/drivers/{{newCarrierDriverId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carriers",
+                "{{newCarrierId}}",
+                "drivers",
+                "{{newCarrierDriverId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cadastrar motorista autônomo",
+          "event": [
+            {
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newEmail', `motorista.autonomo.${Date.now()}@dev.local`);",
+                  "pm.collectionVariables.set('newCnh', String(Math.floor(Math.random() * 1e11)).padStart(11, '0'));"
+                ]
+              },
+              "listen": "prerequest"
+            },
+            {
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.test('autônomo com endereço-base', () => { pm.expect(body.carrierId).to.eql(null); pm.expect(body.baseAddress).to.not.eql(null); });",
+                  "  pm.collectionVariables.set('newAutonomousDriverId', body.id);",
+                  "}"
+                ]
+              },
+              "listen": "test"
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "value": "application/json",
+                "key": "Content-Type"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Elisa Autônoma\",\n  \"email\": \"{{newEmail}}\",\n  \"password\": \"senha-forte\",\n  \"cnhNumber\": \"{{newCnh}}\",\n  \"cnhCategory\": \"C\",\n  \"phone\": \"19998887777\",\n  \"baseAddress\": { \"address\": \"Centro - Campinas/SP\", \"lat\": -22.9056, \"lng\": -47.0608 }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/signup/motorista",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "signup",
+                "motorista"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar motorista",
+          "event": [
+            {
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              },
+              "listen": "test"
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{newAutonomousDriverId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{newAutonomousDriverId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar perfil do autônomo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('endereço-base atualizado', () => pm.expect(pm.response.json().baseAddress.address).to.eql('Centro - Jundiaí/SP'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "value": "application/json",
+                "key": "Content-Type"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"(19) 3333-4444\",\n  \"baseAddress\": { \"address\": \"Centro - Jundiaí/SP\", \"lat\": -23.1857, \"lng\": -46.8978 }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/{{newAutonomousDriverId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drivers",
+                "{{newAutonomousDriverId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Datas sempre no futuro e placa aleatória, para a collection poder rodar várias vezes",
+          "const inHours = (h) => new Date(Date.now() + h * 3600000).toISOString();",
+          "pm.collectionVariables.set('pickupWindowStart', inHours(24));",
+          "pm.collectionVariables.set('pickupWindowEnd', inHours(28));",
+          "pm.collectionVariables.set('deliveryDeadline', inHours(72));",
+          "const pick = (chars) => chars[Math.floor(Math.random() * chars.length)];",
+          "const digits = '0123456789';",
+          "pm.collectionVariables.set('randomPlate', 'TST' + pick(digits) + pick('ABCDEFGHIJKLMNOPQRSTUVWXYZ') + pick(digits) + pick(digits));"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Status esperado de cada requisição e, se ela cria algo, a variável onde guardar o id",
+          "const rules = {",
+          "  'Health': [200],",
+          "  'Criar veículo da frota': [201, 'vehicleId'],",
+          "  'Listar veículos da frota': [200],",
+          "  'Detalhar veículo da frota': [200],",
+          "  'Editar veículo da frota': [200],",
+          "  'Veículo em manutenção': [200],",
+          "  'Veículo disponível': [200],",
+          "  'Remover veículo da frota': [204],",
+          "  'Criar veículo do autônomo': [201, 'autonomousExtraVehicleId'],",
+          "  'Listar veículos do autônomo': [200],",
+          "  'Remover veículo do autônomo': [204],",
+          "  'Motorista da frota indisponível': [200],",
+          "  'Motorista da frota disponível': [200],",
+          "  'Autônomo indisponível': [200],",
+          "  'Autônomo disponível': [200],",
+          "  'Publicar carga': [201, 'shipmentId'],",
+          "  'Listar cargas abertas': [200],",
+          "  'Detalhar carga': [200],",
+          "  'Editar carga': [200],",
+          "  'Publicar carga para cancelar': [201, 'shipmentToCancelId'],",
+          "  'Cancelar carga': [200],",
+          "  'Cargas disponíveis (transportadora A)': [200],",
+          "  'Cargas disponíveis (autônomo)': [200],",
+          "  'Contraproposta da transportadora A': [201, 'offerId'],",
+          "  'Transportadora B aceita o preço': [201, 'carrierBOfferId'],",
+          "  'Autônomo aceita o preço': [201, 'autonomousOfferId'],",
+          "  'Minhas ofertas (transportadora A)': [200],",
+          "  'Minhas ofertas (autônomo)': [200],",
+          "  'Autônomo retira a oferta': [200],",
+          "  'Ofertas recebidas na carga': [200],",
+          "  'Recusar oferta da transportadora B': [200],",
+          "  'Aceitar contraproposta da transportadora A': [201, 'deliveryId'],",
+          "  'Atribuir motorista e veículo': [200],",
+          "  'Entregas do motorista': [200],",
+          "  'Confirmar coleta': [200],",
+          "  'Iniciar trânsito': [200],",
+          "  'Confirmar entrega': [200],",
+          "  'Empresa acompanha a entrega': [200],",
+          "  'Publicar carga (cancelamento)': [201, 'shipment3Id'],",
+          "  'Autônomo oferta na carga': [201, 'offer3Id'],",
+          "  'Empresa aceita oferta do autônomo': [201, 'delivery3Id'],",
+          "  'Empresa cancela a entrega': [200]",
+          "};",
+          "",
+          "// Checagens de regra de negócio nos passos principais do fluxo",
+          "const checks = {",
+          "  'Contraproposta da transportadora A': (b) => { pm.expect(b.status).to.eql('PENDENTE'); pm.expect(b.isCounterProposal).to.eql(true); pm.expect(b.assignmentPending).to.eql(true); },",
+          "  'Autônomo retira a oferta': (b) => pm.expect(b.status).to.eql('RETIRADA'),",
+          "  'Recusar oferta da transportadora B': (b) => pm.expect(b.status).to.eql('RECUSADA'),",
+          "  'Aceitar contraproposta da transportadora A': (b) => pm.expect(b.status).to.eql('COLETA_PENDENTE'),",
+          "  'Atribuir motorista e veículo': (b) => pm.expect(b.assignmentPending).to.eql(false),",
+          "  'Confirmar coleta': (b) => pm.expect(b.status).to.eql('COLETADO'),",
+          "  'Iniciar trânsito': (b) => pm.expect(b.shipment.status).to.eql('EM_TRANSITO'),",
+          "  'Confirmar entrega': (b) => { pm.expect(b.status).to.eql('ENTREGUE'); pm.expect(b.shipment.status).to.eql('ENTREGUE'); },",
+          "  'Empresa acompanha a entrega': (b) => pm.expect(b.events.map((e) => e.status)).to.eql(['COLETA_PENDENTE', 'COLETADO', 'EM_TRANSITO', 'ENTREGUE']),",
+          "  'Empresa cancela a entrega': (b) => { pm.expect(b.status).to.eql('CANCELADO'); pm.expect(b.shipment.status).to.eql('ABERTA'); }",
+          "};",
+          "",
+          "const name = pm.info.requestName;",
+          "const rule = rules[name];",
+          "if (rule) {",
+          "  const [status, saveAs] = rule;",
+          "  pm.test(`status ${status}`, () => pm.response.to.have.status(status));",
+          "  if (pm.response.code === status) {",
+          "    if (saveAs) pm.collectionVariables.set(saveAs, pm.response.json().id);",
+          "    if (checks[name]) pm.test('regra de negócio', () => checks[name](pm.response.json()));",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "shipperId",
+      "value": "11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "key": "carrierAId",
+      "value": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "key": "carrierBId",
+      "value": "22222222-2222-4222-8222-333333333333"
+    },
+    {
+      "key": "carrierDriverId",
+      "value": "33333333-3333-4333-8333-333333333333"
+    },
+    {
+      "key": "autonomousDriverId",
+      "value": "44444444-4444-4444-8444-444444444444"
+    },
+    {
+      "key": "carrierVehicleId",
+      "value": "55555555-5555-4555-8555-555555555555"
+    },
+    {
+      "key": "autonomousVehicleId",
+      "value": "66666666-6666-4666-8666-666666666666"
+    },
+    {
+      "key": "vehicleId",
+      "value": ""
+    },
+    {
+      "key": "autonomousExtraVehicleId",
+      "value": ""
+    },
+    {
+      "key": "shipmentId",
+      "value": ""
+    },
+    {
+      "key": "shipmentToCancelId",
+      "value": ""
+    },
+    {
+      "key": "offerId",
+      "value": ""
+    },
+    {
+      "key": "carrierBOfferId",
+      "value": ""
+    },
+    {
+      "key": "autonomousOfferId",
+      "value": ""
+    },
+    {
+      "key": "deliveryId",
+      "value": ""
+    },
+    {
+      "key": "shipment3Id",
+      "value": ""
+    },
+    {
+      "key": "offer3Id",
+      "value": ""
+    },
+    {
+      "key": "delivery3Id",
+      "value": ""
+    },
+    {
+      "key": "pickupWindowStart",
+      "value": ""
+    },
+    {
+      "key": "pickupWindowEnd",
+      "value": ""
+    },
+    {
+      "key": "deliveryDeadline",
+      "value": ""
+    },
+    {
+      "key": "randomPlate",
+      "value": ""
+    }
+  ]
+}
