@@ -3,6 +3,7 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
+import { createDocsRoutes } from './openapi/docs.routes.js';
 import type { Logger } from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middlewares/error-handler.js';
 import { createRoutes, type RouteDeps } from './routes/index.js';
@@ -10,6 +11,8 @@ import { createRoutes, type RouteDeps } from './routes/index.js';
 export interface AppDeps extends RouteDeps {
   logger: Logger;
   corsOrigins: string[];
+  // Swagger UI em /docs. Desligado por padrão: expõe o mapa completo da API
+  apiDocs?: boolean;
 }
 
 // A app recebe as dependências por parâmetro para os testes injetarem versões falsas
@@ -35,6 +38,7 @@ export function createApp(deps: AppDeps): Express {
     }),
   );
 
+  if (deps.apiDocs) app.use(createDocsRoutes());
   app.use(createRoutes(deps));
   app.use(notFoundHandler);
   app.use(errorHandler);

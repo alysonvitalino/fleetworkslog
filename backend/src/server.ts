@@ -1,5 +1,5 @@
 import { createApp } from './app.js';
-import { loadEnv } from './config/env.js';
+import { apiDocsEnabled, loadEnv } from './config/env.js';
 import { createKnex } from './db/knex.js';
 import { createLogger } from './lib/logger.js';
 import { createRedis } from './lib/redis.js';
@@ -19,6 +19,7 @@ const app = createApp({
   logger,
   corsOrigins: env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
   db: knex,
+  apiDocs: apiDocsEnabled(env),
   healthChecks: {
     postgres: () => knex.raw('SELECT 1'),
     redis: () => redis.ping(),
@@ -27,6 +28,7 @@ const app = createApp({
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'API no ar');
+  if (apiDocsEnabled(env)) logger.info(`Swagger UI em http://localhost:${env.PORT}/docs`);
 });
 
 // Encerramento gracioso: para de aceitar conexões e fecha banco/redis antes de sair
