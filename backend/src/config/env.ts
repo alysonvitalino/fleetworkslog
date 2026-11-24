@@ -9,9 +9,15 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
+  // Sem valor explícito, o Swagger fica ligado só em development (ver apiDocsEnabled)
+  API_DOCS_ENABLED: z.stringbool().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
+
+export function apiDocsEnabled(env: Env): boolean {
+  return env.API_DOCS_ENABLED ?? env.NODE_ENV === 'development';
+}
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const result = envSchema.safeParse(source);

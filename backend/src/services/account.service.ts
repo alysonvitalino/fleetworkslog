@@ -11,14 +11,20 @@ import {
 import { toGeography } from '../db/geo.js';
 import { AppError } from '../errors/app-error.js';
 import { hashPassword } from '../lib/password.js';
-import { companiesQuery, toCompanyDto, type CompanyRow } from '../models/account.model.js';
+import {
+  companiesQuery,
+  toCompanyDto,
+  toDriverDto,
+  type CompanyRow,
+  type DriverRow,
+} from '../models/account.model.js';
+import { DriverRepository } from '../repositories/driver.repository.js';
 import type {
   SignupAutonomousDriverInput,
   SignupCarrierInput,
   SignupShipperInput,
   UpdateCompanyInput,
 } from '../schemas/account.schema.js';
-import { getDriver } from './driver.service.js';
 import { insertUser, translateUniqueViolation } from './users.service.js';
 
 export async function getCompany(db: Knex, companyId: string): Promise<CompanyDto> {
@@ -97,7 +103,8 @@ export async function signupAutonomousDriver(
           base_geo: toGeography(trx, input.baseAddress),
         })
         .returning<{ id: string }[]>('id');
-      return getDriver(trx, (driver as { id: string }).id);
+      const created = await new DriverRepository(trx).findById((driver as { id: string }).id);
+      return toDriverDto(created as DriverRow);
     });
   } catch (error) {
     throw translateUniqueViolation(error);

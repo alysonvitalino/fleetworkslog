@@ -30,6 +30,9 @@ export const updateVehicleSchema = z
   .partial()
   .refine((body) => Object.keys(body).length > 0, 'Informe ao menos um campo para atualizar');
 
+// PUT substitui o veículo inteiro: exige todos os campos editáveis (o status tem rota própria)
+export const replaceVehicleSchema = createVehicleSchema;
+
 export const updateVehicleStatusSchema = z.strictObject({ status: z.enum(ManualVehicleStatus) });
 
 export const updateDriverStatusSchema = z.strictObject({ status: z.enum(ManualDriverStatus) });

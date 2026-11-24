@@ -109,6 +109,41 @@ describe('veículos da frota da transportadora', () => {
 
     expect((await request(app).patch(path).send({ status: 'MANUTENCAO' })).status).toBe(400);
   });
+
+  it('should replace all vehicle fields with PUT', async () => {
+    const carrierId = await createCarrier(db);
+    const vehicleId = await createVehicle(db, { carrierId });
+
+    const response = await request(app)
+      .put(`/carriers/${carrierId}/vehicles/${vehicleId}`)
+      .send({ plate: 'qwe1r23', type: 'CARRETA', capacityKg: 30000, capacityM3: 90 });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: vehicleId,
+      plate: 'QWE1R23',
+      type: 'CARRETA',
+      capacityKg: 30000,
+      capacityM3: 90,
+      status: 'DISPONIVEL',
+    });
+  });
+
+  it('should return 400 on PUT with missing fields and 404 for another carrier vehicle', async () => {
+    const carrierId = await createCarrier(db);
+    const vehicleId = await createVehicle(db, { carrierId });
+
+    const partial = await request(app)
+      .put(`/carriers/${carrierId}/vehicles/${vehicleId}`)
+      .send({ capacityKg: 7000 });
+    expect(partial.status).toBe(400);
+
+    const otherCarrier = await createCarrier(db);
+    const foreign = await request(app)
+      .put(`/carriers/${otherCarrier}/vehicles/${vehicleId}`)
+      .send(newVehicle);
+    expect(foreign.status).toBe(404);
+  });
 });
 
 describe('status do veículo', () => {

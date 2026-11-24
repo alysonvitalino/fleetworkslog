@@ -142,6 +142,111 @@ describe('edição de carga', () => {
   });
 });
 
+describe('substituição de carga (PUT)', () => {
+  it('should replace all fields and clear the omitted optional one', async () => {
+    const shipperId = await createShipper(db);
+    const shipmentId = await createShipment(db, shipperId);
+    await db('shipments').where({ id: shipmentId }).update({ special_requirements: 'Frágil' });
+    // Corpo completo, mas sem specialRequirements: no PUT o campo omitido é limpo
+    const body: Partial<ReturnType<typeof newShipment>> = {
+      ...newShipment(),
+      cargoType: 'Alimentos',
+      priceOffered: 4200,
+    };
+    delete body.specialRequirements;
+
+    const response = await request(app)
+      .put(`/companies/${shipperId}/shipments/${shipmentId}`)
+      .send(body);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: shipmentId,
+      cargoType: 'Alimentos',
+      priceOffered: 4200,
+      specialRequirements: null,
+    });
+    const saved = await db('shipments').where({ id: shipmentId }).first('cargo_type');
+    expect(saved.cargo_type).toBe('Alimentos');
+  });
+
+  it('should return 400 when a required field is missing', async () => {
+    const shipperId = await createShipper(db);
+    const shipmentId = await createShipment(db, shipperId);
+
+    const response = await request(app)
+      .put(`/companies/${shipperId}/shipments/${shipmentId}`)
+      .send({ priceOffered: 100 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('should return 409 when the shipment is no longer ABERTA', async () => {
+    const shipperId = await createShipper(db);
+    const shipmentId = await createShipment(db, shipperId, { status: 'ACEITA' });
+
+    const response = await request(app)
+      .put(`/companies/${shipperId}/shipments/${shipmentId}`)
+      .send(newShipment());
+
+    expect(response.status).toBe(409);
+  });
+});
+
+describe('exclusão de carga', () => {
+  it('should delete an ABERTA shipment without offers', async () => {
+    const shipperId = await createShipper(db);
+    const shipmentId = await createShipment(db, shipperId);
+    const path = `/companies/${shipperId}/shipments/${shipmentId}`;
+
+    const response = await request(app).delete(path);
+
+    expect(response.status).toBe(204);
+    expect(response.body).toEqual({});
+    expect((await request(app).get(path)).status).toBe(404);
+    expect(await db('shipments').where({ id: shipmentId }).first('id')).toBeUndefined();
+  });
+
+  it('should return 409 for a shipment that already received offers, of any status', async () => {
+    const shipperId = await createShipper(db);
+    const shipmentId = await createShipment(db, shipperId);
+    await createOffer(
+      db,
+      shipmentId,
+      { carrierId: await createCarrier(db) },
+      { status: 'RETIRADA' },
+    );
+
+    const response = await request(app).delete(`/companies/${shipperId}/shipments/${shipmentId}`);
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.message).toMatch(/cancele/);
+    expect(await db('shipments').where({ id: shipmentId }).first('id')).toBeDefined();
+  });
+
+  it('should return 409 for a shipment that is not ABERTA', async () => {
+    const shipperId = await createShipper(db);
+    const shipmentId = await createShipment(db, shipperId, { status: 'CANCELADA' });
+
+    const response = await request(app).delete(`/companies/${shipperId}/shipments/${shipmentId}`);
+
+    expect(response.status).toBe(409);
+  });
+
+  it('should return 404 for a shipment of another company', async () => {
+    const shipmentId = await createShipment(db, await createShipper(db));
+    const otherShipper = await createShipper(db);
+
+    const response = await request(app).delete(
+      `/companies/${otherShipper}/shipments/${shipmentId}`,
+    );
+
+    expect(response.status).toBe(404);
+    expect(await db('shipments').where({ id: shipmentId }).first('id')).toBeDefined();
+  });
+});
+
 describe('cancelamento de carga', () => {
   it('should cancel the shipment and only its PENDENTE offers', async () => {
     const shipperId = await createShipper(db);

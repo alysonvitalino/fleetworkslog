@@ -8,11 +8,12 @@ const logger = createLogger('silent');
 // O Knex só conecta na primeira query: estes testes nunca chegam a tocar no banco
 const db = createKnex('postgres://unused@localhost:1/unused');
 
-function buildApp(postgresUp = true, redisUp = true) {
+function buildApp(postgresUp = true, redisUp = true, apiDocs = false) {
   return createApp({
     logger,
     corsOrigins: ['http://localhost:5173'],
     db,
+    apiDocs,
     healthChecks: {
       postgres: () => (postgresUp ? Promise.resolve() : Promise.reject(new Error('down'))),
       redis: () => (redisUp ? Promise.resolve() : Promise.reject(new Error('down'))),
@@ -52,5 +53,25 @@ describe('unknown routes', () => {
     expect(response.status).toBe(404);
     expect(response.body.error.code).toBe('NOT_FOUND');
     expect(response.body.error.requestId).toBe(response.headers['x-request-id']);
+  });
+});
+
+describe('API docs', () => {
+  it('should serve the Swagger UI at /docs when enabled', async () => {
+    const response = await request(buildApp(true, true, true)).get('/docs/');
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toMatch(/text\/html/);
+    expect(response.text).toContain('swagger-ui');
+  });
+
+  it('should serve the raw OpenAPI document at /docs/openapi.json when enabled', async () => {
+    const response = await request(buildApp(true, true, true)).get('/docs/openapi.json');
+    expect(response.status).toBe(200);
+    expect(response.body.openapi).toBe('3.1.0');
+  });
+
+  it('should return 404 for /docs when disabled', async () => {
+    const response = await request(buildApp()).get('/docs/openapi.json');
+    expect(response.status).toBe(404);
   });
 });

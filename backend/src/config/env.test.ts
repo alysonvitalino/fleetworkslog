@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadEnv } from './env.js';
+import { apiDocsEnabled, loadEnv } from './env.js';
 
 const validEnv = {
   DATABASE_URL: 'postgres://user:pass@localhost:5437/db',
@@ -19,5 +19,19 @@ describe('loadEnv', () => {
 
   it('should throw an error listing the invalid variable when DATABASE_URL is missing', () => {
     expect(() => loadEnv({ REDIS_URL: validEnv.REDIS_URL })).toThrow(/DATABASE_URL/);
+  });
+});
+
+describe('apiDocsEnabled', () => {
+  it('should enable docs by default only in development', () => {
+    expect(apiDocsEnabled(loadEnv(validEnv))).toBe(true);
+    expect(apiDocsEnabled(loadEnv({ ...validEnv, NODE_ENV: 'production' }))).toBe(false);
+  });
+
+  it('should respect an explicit API_DOCS_ENABLED value', () => {
+    expect(apiDocsEnabled(loadEnv({ ...validEnv, API_DOCS_ENABLED: 'false' }))).toBe(false);
+    expect(
+      apiDocsEnabled(loadEnv({ ...validEnv, NODE_ENV: 'staging', API_DOCS_ENABLED: 'true' })),
+    ).toBe(true);
   });
 });
