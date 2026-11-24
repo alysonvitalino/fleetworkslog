@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:coverage": "vitest run --config vitest.coverage.config.ts",
     "db:migrate": "tsx --env-file-if-exists=.env src/db/cli.ts migrate",
     "db:rollback": "tsx --env-file-if-exists=.env src/db/cli.ts rollback",
     "db:seed": "tsx --env-file-if-exists=.env src/db/cli.ts seed",
@@ -37,6 +38,7 @@
     "@types/node": "^24.19.0",
     "@types/supertest": "^7.2.1",
     "@types/swagger-ui-express": "^4.1.8",
+    "@vitest/coverage-v8": "^5.0.2",
     "supertest": "^7.3.0",
     "tsx": "^4.23.15",
     "vitest": "^5.0.2"

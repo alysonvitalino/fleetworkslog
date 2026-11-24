@@ -241,6 +241,27 @@ describe('motoristas da frota (PUTF-31)', () => {
     ).toBe(404);
   });
 
+  it('should replace the driver profile with PUT, clearing the omitted phone', async () => {
+    const carrierId = await createCarrier(db);
+    const created = await request(app).post(`/carriers/${carrierId}/drivers`).send(newDriver());
+    const path = `/carriers/${carrierId}/drivers/${created.body.id}`;
+
+    const replaced = await request(app)
+      .put(path)
+      .send({ name: 'Diego Souza', cnhNumber: '11122233344', cnhCategory: 'D' });
+
+    expect(replaced.status).toBe(200);
+    expect(replaced.body).toMatchObject({
+      name: 'Diego Souza',
+      cnhNumber: '11122233344',
+      cnhCategory: 'D',
+      phone: null,
+    });
+
+    const partial = await request(app).put(path).send({ name: 'Só o nome' });
+    expect(partial.status).toBe(400);
+  });
+
   it('should delete a driver without history, together with the user', async () => {
     const carrierId = await createCarrier(db);
     const created = await request(app).post(`/carriers/${carrierId}/drivers`).send(newDriver());

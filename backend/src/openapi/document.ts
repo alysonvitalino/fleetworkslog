@@ -7,6 +7,7 @@ import { z, type ZodObject, type ZodType } from 'zod';
 import {
   createCarrierDriverSchema,
   listDriversQuerySchema,
+  replaceCarrierDriverSchema,
   signupAutonomousDriverSchema,
   signupCarrierSchema,
   signupShipperSchema,
@@ -26,11 +27,13 @@ import {
 import {
   createShipmentSchema,
   listShipmentsQuerySchema,
+  replaceShipmentSchema,
   updateShipmentSchema,
 } from '../schemas/shipment.schema.js';
 import {
   createVehicleSchema,
   listVehiclesQuerySchema,
+  replaceVehicleSchema,
   updateDriverStatusSchema,
   updateVehicleSchema,
   updateVehicleStatusSchema,
@@ -224,6 +227,16 @@ function vehicleRoutes(basePath: string, owner: string, plate: string): RouteDoc
     },
     { method: 'get', path: `${basePath}/:vehicleId`, tag, summary: `Detalha veículo (${owner})` },
     {
+      method: 'put',
+      path: `${basePath}/:vehicleId`,
+      tag,
+      summary: `Substitui veículo (${owner})`,
+      description: 'Envie todos os campos. Para alterar só alguns, use PATCH.',
+      body: replaceVehicleSchema,
+      bodyExample: { plate, type: 'TRUCK_TRUCK', capacityKg: 12000, capacityM3: 60 },
+      conflict: 'Já existe um veículo cadastrado com essa placa',
+    },
+    {
       method: 'patch',
       path: `${basePath}/:vehicleId`,
       tag,
@@ -414,6 +427,22 @@ export function buildRouteDocs(now = new Date()): RouteDoc[] {
       summary: 'Detalha motorista da transportadora',
     },
     {
+      method: 'put',
+      path: '/carriers/:carrierId/drivers/:driverId',
+      tag: 'Motoristas',
+      summary: 'Substitui perfil do motorista da transportadora',
+      description:
+        'Envie todos os campos (o telefone omitido é removido). Para alterar só alguns, use PATCH.',
+      body: replaceCarrierDriverSchema,
+      bodyExample: {
+        name: 'Marcos Silva Santos',
+        cnhNumber: '98765432100',
+        cnhCategory: 'E',
+        phone: '41998765432',
+      },
+      conflict: 'CNH já cadastrada',
+    },
+    {
       method: 'patch',
       path: '/carriers/:carrierId/drivers/:driverId',
       tag: 'Motoristas',
@@ -479,6 +508,18 @@ export function buildRouteDocs(now = new Date()): RouteDoc[] {
       summary: 'Detalha carga',
     },
     {
+      method: 'put',
+      path: '/companies/:companyId/shipments/:shipmentId',
+      tag: 'Cargas',
+      summary: 'Substitui carga',
+      description:
+        'Envie todos os campos (specialRequirements omitido é removido). ' +
+        'Para alterar só alguns, use PATCH.',
+      body: replaceShipmentSchema,
+      bodyExample: { ...shipmentExample(now), priceOffered: 5200 },
+      conflict: 'Só é possível editar uma carga ABERTA',
+    },
+    {
       method: 'patch',
       path: '/companies/:companyId/shipments/:shipmentId',
       tag: 'Cargas',
@@ -487,6 +528,16 @@ export function buildRouteDocs(now = new Date()): RouteDoc[] {
       body: updateShipmentSchema,
       bodyExample: { priceOffered: 5200 },
       conflict: 'Só é possível editar uma carga ABERTA',
+    },
+    {
+      method: 'delete',
+      path: '/companies/:companyId/shipments/:shipmentId',
+      tag: 'Cargas',
+      summary: 'Exclui carga',
+      description:
+        'Só para carga ABERTA que ainda não recebeu ofertas. Com ofertas, use o cancelamento.',
+      successStatus: 204,
+      conflict: 'Carga não está ABERTA ou já recebeu ofertas (cancele-a em vez de excluir)',
     },
     {
       method: 'post',

@@ -1,67 +1,65 @@
 import type { Request, RequestHandler } from 'express';
-import type { Knex } from 'knex';
 import { uuidSchema } from '../schemas/common.schema.js';
 import {
   listVehiclesQuerySchema,
   type CreateVehicleInput,
   type UpdateVehicleInput,
 } from '../schemas/vehicle.schema.js';
-import {
-  createVehicle,
-  deleteVehicle,
-  getVehicle,
-  listVehicles,
-  updateVehicle,
-  updateVehicleStatus,
-  type VehicleOwner,
-} from '../services/vehicle.service.js';
+import type { VehicleOwner, VehicleService } from '../services/vehicle.service.js';
 
 export type OwnerFromParams = (params: Request['params']) => VehicleOwner;
 
-export function vehicleController(db: Knex, ownerFromParams: OwnerFromParams) {
-  const list: RequestHandler = async (req, res) => {
+/**
+ * Traduz HTTP ↔ service. O dono do veículo vem do path e é extraído por `ownerFromParams`,
+ * o que permite montar o mesmo controller para transportadora e para motorista autônomo.
+ */
+export class VehicleController {
+  constructor(
+    private readonly vehicles: VehicleService,
+    private readonly ownerFromParams: OwnerFromParams,
+  ) {}
+
+  list: RequestHandler = async (req, res) => {
     const query = listVehiclesQuerySchema.parse(req.query);
-    res.json(await listVehicles(db, ownerFromParams(req.params), query));
+    res.json(await this.vehicles.list(this.ownerFromParams(req.params), query));
   };
 
-  const get: RequestHandler = async (req, res) => {
-    const vehicleId = uuidSchema.parse(req.params.vehicleId);
-    res.json(await getVehicle(db, ownerFromParams(req.params), vehicleId));
+  get: RequestHandler = async (req, res) => {
+    res.json(await this.vehicles.get(this.ownerFromParams(req.params), vehicleId(req)));
   };
 
-  const create: RequestHandler = async (req, res) => {
-    const vehicle = await createVehicle(
-      db,
-      ownerFromParams(req.params),
+  create: RequestHandler = async (req, res) => {
+    const vehicle = await this.vehicles.create(
+      this.ownerFromParams(req.params),
       req.body as CreateVehicleInput,
     );
     res.status(201).json(vehicle);
   };
 
-  const update: RequestHandler = async (req, res) => {
-    const vehicleId = uuidSchema.parse(req.params.vehicleId);
+  update: RequestHandler = async (req, res) => {
     res.json(
-      await updateVehicle(
-        db,
-        ownerFromParams(req.params),
-        vehicleId,
+      await this.vehicles.update(
+        this.ownerFromParams(req.params),
+        vehicleId(req),
         req.body as UpdateVehicleInput,
       ),
     );
   };
 
-  const updateStatus: RequestHandler = async (req, res) => {
-    const vehicleId = uuidSchema.parse(req.params.vehicleId);
+  updateStatus: RequestHandler = async (req, res) => {
     res.json(
-      await updateVehicleStatus(db, ownerFromParams(req.params), vehicleId, req.body.status),
+      await this.vehicles.updateStatus(
+        this.ownerFromParams(req.params),
+        vehicleId(req),
+        req.body.status,
+      ),
     );
   };
 
-  const remove: RequestHandler = async (req, res) => {
-    const vehicleId = uuidSchema.parse(req.params.vehicleId);
-    await deleteVehicle(db, ownerFromParams(req.params), vehicleId);
+  remove: RequestHandler = async (req, res) => {
+    await this.vehicles.delete(this.ownerFromParams(req.params), vehicleId(req));
     res.status(204).end();
   };
-
-  return { list, get, create, update, updateStatus, remove };
 }
+
+const vehicleId = (req: Request) => uuidSchema.parse(req.params.vehicleId);

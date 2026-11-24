@@ -62,10 +62,18 @@ export const updateShipmentSchema = z
   .partial()
   .refine((body) => Object.keys(body).length > 0, 'Informe ao menos um campo para atualizar');
 
+// PUT substitui a carga inteira: todos os campos obrigatórios são exigidos e o campo
+// opcional omitido é limpo (vira null), diferente do PATCH, que mantém o valor salvo
+export const replaceShipmentSchema = createShipmentSchema.transform((body) => ({
+  ...body,
+  specialRequirements: body.specialRequirements ?? null,
+}));
+
 export const listShipmentsQuerySchema = paginationQuerySchema.extend({
   status: z.enum(ShipmentStatus).optional(),
 });
 
 export type CreateShipmentInput = z.infer<typeof createShipmentSchema>;
 export type UpdateShipmentInput = z.infer<typeof updateShipmentSchema>;
+export type ReplaceShipmentInput = z.infer<typeof replaceShipmentSchema>;
 export type ListShipmentsQuery = z.infer<typeof listShipmentsQuerySchema>;

@@ -106,6 +106,12 @@ export const updateCarrierDriverSchema = z
   .partial()
   .refine(nonEmpty, NON_EMPTY_MESSAGE);
 
+// PUT substitui o perfil inteiro: todos os campos obrigatórios e o telefone omitido é limpo.
+// O e-mail não entra: é o login do motorista e não é editado por aqui
+export const replaceCarrierDriverSchema = z
+  .strictObject(driverProfileFields)
+  .transform((body) => ({ ...body, phone: body.phone ?? null }));
+
 export const updateAutonomousDriverSchema = z
   .strictObject({ ...driverProfileFields, baseAddress: addressSchema })
   .partial()
@@ -121,5 +127,6 @@ export type SignupAutonomousDriverInput = z.infer<typeof signupAutonomousDriverS
 export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
 export type CreateCarrierDriverInput = z.infer<typeof createCarrierDriverSchema>;
 export type UpdateCarrierDriverInput = z.infer<typeof updateCarrierDriverSchema>;
+export type ReplaceCarrierDriverInput = z.infer<typeof replaceCarrierDriverSchema>;
 export type UpdateAutonomousDriverInput = z.infer<typeof updateAutonomousDriverSchema>;
 export type ListDriversQuery = z.infer<typeof listDriversQuerySchema>;
